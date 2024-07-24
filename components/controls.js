@@ -13,7 +13,7 @@ class Controls extends HTMLElement {
           background-color: #ccc;
         }
 
-        :host > div {
+        .controls-content > div {
           display: flex;
           flex-wrap: wrap-reverse;
           gap: 8px;
@@ -21,7 +21,7 @@ class Controls extends HTMLElement {
           justify-content: space-between;
         }
 
-        :host label {
+        .controls-content label {
           font-size: small;
         }
 
@@ -80,38 +80,90 @@ class Controls extends HTMLElement {
           color: currentColor;
           cursor: pointer;
         }
+
+        .header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .controls-content {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .toggle-button {
+          background: none;
+          border: none;
+          cursor: pointer;
+        }
+
+        .controls-content.collapsed {
+          display: none;
+        }
+
+        .rotate svg {
+          transform: rotate(180deg);
+        }
+        
+        svg {
+          transition: transform 150ms;
+        }
+        
+        h4 {
+          margin: 0;
+        }
       </style>
-      <div>
-        <div class="input-wrapper">
-          <button id="value-decrease">-</button>
-          <input type="number" id="value-input" min="0" max="100" value="0" />
-          <button id="value-increase">+</button>
+      <div class="header">
+        <h4>Controls</h4>
+        <button class="toggle-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18 9s-4.419 6-6 6s-6-6-6-6" color="currentColor"/></svg>
+        </button>
+      </div>
+      <div class="controls-content">
+        <div>
+          <div class="input-wrapper">
+            <button id="value-decrease">-</button>
+            <input type="number" id="value-input" min="0" max="100" value="0" />
+            <button id="value-increase">+</button>
+          </div>
+          <label for="value-input">Value</label>
         </div>
-        <label for="value-input">Value</label>
-      </div>
-      <div>
-        <div class="input-wrapper">
-          <button id="size-decrease">-</button>
-          <input type="number" id="size-input" min="10" value="100" step="10" />
-          <button id="size-increase">+</button>
+        <div>
+          <div class="input-wrapper">
+            <button id="size-decrease">-</button>
+            <input type="number" id="size-input" min="10" value="100" step="10" />
+            <button id="size-increase">+</button>
+          </div>
+          <label for="size-input">Size</label>
         </div>
-        <label for="size-input">Size</label>
-      </div>
-      <div>
-        <input type="color" id="circle-color-input" value="#cccccc" />
-        <label for="circle-color-input">Circle Color</label>
-      </div>
-      <div>
-        <input type="color" id="path-color-input" value="#4caf50" />
-        <label for="path-color-input">Progress Color</label>
-      </div>
-      <div>
-        <input type="checkbox" id="animate-toggle" />
-        <label for="animate-toggle">Animate</label>
-      </div>
-      <div>
-        <input type="checkbox" id="hide-toggle" />
-        <label for="hide-toggle">Hide</label>
+        <div>
+          <input type="color" id="circle-color-input" value="#cccccc" />
+          <label for="circle-color-input">Circle Color</label>
+        </div>
+        <div>
+          <input type="color" id="path-color-input" value="#4caf50" />
+          <label for="path-color-input">Progress Color</label>
+        </div>
+        <div>
+          <input type="checkbox" id="animate-toggle" />
+          <label for="animate-toggle">Animate</label>
+        </div>
+        <div>
+          <input type="checkbox" id="hide-toggle" />
+          <label for="hide-toggle">Hide</label>
+        </div>
+        <div class="position-wrapper">
+          <label for="position-select">Position</label>
+          <select id="position-select">
+            <option value="default">Default</option>
+            <option value="top-left">Top Left</option>
+            <option value="top-right">Top Right</option>
+            <option value="bottom-left">Bottom Left</option>
+            <option value="bottom-right">Bottom Right</option>
+          </select>
+        </div>
       </div>
     `;
   }
@@ -125,6 +177,9 @@ class Controls extends HTMLElement {
     this.pathColorInput = this.shadowRoot.querySelector('#path-color-input');
     this.animateToggle = this.shadowRoot.querySelector('#animate-toggle');
     this.hideToggle = this.shadowRoot.querySelector('#hide-toggle');
+    this.positionSelect = this.shadowRoot.querySelector('#position-select');
+    this.toggleButton = this.shadowRoot.querySelector('.toggle-button');
+    this.controlsContent = this.shadowRoot.querySelector('.controls-content');
 
     this.shadowRoot
       .querySelector('#value-decrease')
@@ -157,6 +212,11 @@ class Controls extends HTMLElement {
       'change',
       this.handleHideToggle.bind(this)
     );
+    this.positionSelect.addEventListener(
+      'change',
+      this.handlePositionChange.bind(this)
+    );
+    this.toggleButton.addEventListener('click', this.toggleCollapse.bind(this));
   }
 
   setProgressBlock(progressBlock) {
@@ -205,6 +265,48 @@ class Controls extends HTMLElement {
     if (this.progressBlock) {
       this.progressBlock.style.display = event.target.checked ? 'none' : '';
     }
+  }
+
+  handlePositionChange(event) {
+    const position = event.target.value;
+    this.style.position = position === 'default' ? 'static' : 'fixed';
+
+    switch (position) {
+      case 'top-left':
+        this.style.top = '0';
+        this.style.left = '0';
+        this.style.right = '';
+        this.style.bottom = '';
+        break;
+      case 'top-right':
+        this.style.top = '0';
+        this.style.right = '0';
+        this.style.left = '';
+        this.style.bottom = '';
+        break;
+      case 'bottom-left':
+        this.style.bottom = '0';
+        this.style.left = '0';
+        this.style.right = '';
+        this.style.top = '';
+        break;
+      case 'bottom-right':
+        this.style.bottom = '0';
+        this.style.right = '0';
+        this.style.left = '';
+        this.style.top = '';
+        break;
+      default:
+        this.style.top = '';
+        this.style.right = '';
+        this.style.bottom = '';
+        this.style.left = '';
+    }
+  }
+
+  toggleCollapse() {
+    this.controlsContent.classList.toggle('collapsed');
+    this.toggleButton.classList.toggle('rotate');
   }
 
   decreaseValue() {
